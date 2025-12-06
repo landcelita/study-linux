@@ -1,0 +1,28 @@
+#!/bin/bash
+
+<<COMMENT
+demand-paging.pyプロセスについて、1秒間に1回メモリに関する情報を出力します。
+各行の先頭には情報を採取した時刻を表示します。その後に続くフィールドの意味は以下のとおりです。
+  第1フィールド: 獲得済みメモリ領域のサイズ
+  第2フィールド: 獲得済み物理メモリのサイズ
+  第3フィールド: メジャーフォールトの数
+  第4フィールド: マイナーフォールトの数
+COMMENT
+
+PID=$(pgrep -f "demand-paging\.py")
+
+if [ -z "${PID}" ]; then
+  echo "demand-paging.pyプロセスが存在しませんので、$0より先に起動してください。" >&2
+  exit 1
+fi
+
+while true; do
+  DATE=$(date | tr -d '\n')
+  INFO=$(ps -o vsz,rss,majflt,minflt -p ${PID} | sed -n '2p') # POSIX互換性を保つためmajflt,minfltのフィールドは用意されているが、実際にはmacOSでは出力されない
+  if [ $? -ne 0 ]; then
+    echo "$DATE: demand-paging.pyプロセスは終了しました。" >&2
+    exit 1
+  fi
+  echo "$DATE: ${INFO}"
+  sleep 1
+done
