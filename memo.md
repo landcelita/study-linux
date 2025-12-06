@@ -19,4 +19,19 @@
   - ところでPAGE_SIZEってシステムによって異なるんじゃないの？と思ってClaude Codeくんに聞いたところ、その通りだった。なので、本来`PAGE_SIZE = os.sysconf('SC_PAGE_SIZE')`とするのが良さそう
   - 実際、macOSでは`getconf PAGE_SIZE`すると16384だった
   - macOSの方でvm_statしながらdemand-paging.pyを実行すると、おおよそ900fault/sくらいだった。これは10MB/16384byte=610の方に近い(なんでちょっと多めなんだろう)
+- p.99 _x86_64アーキテクチャにおいて、仮想アドレス空間の大きさは128TiBで..._
+  - ほんまか？ Table 5-1. Properties of Different Paging Modes を見ると、4-level page tablesの場合2**48byte=256TiB使えそうだけど
+  - と思ってチャッピーに聞いたところ、上位128TiBがuser-spaceで、下位128TiBがkernel-spaceらしい
+  - source: https://docs.kernel.org/arch/x86/x86_64/mm.html
+    - 0000000000000000 |    0       | 00007fffffffefff | ~128 TB | user-space virtual memory, different per mm
+    - ffff800000000000 | -128    TB | ffff87ffffffffff |    8 TB | ... guard hole, also reserved for hypervisor
+- p.103 _データベースや仮想マシンマネージャなど、仮想メモリを大量に使うソフトウェアには、ヒュージページを使う設定が用意されていることがある_
+  - 気になってTiDBについて調べてみたところ、**THPは切れ**と書いてあった。よしなにやってくれるのかな
+    - https://docs.pingcap.com/tidb/stable/tune-operating-system/#disable-transparent-huge-pages-thp
+  - 内部的に明示的にヒュージページを使っているかどうかはパッと分からなさそう
+    - わんちゃんこの辺が関係あるかも: https://github.com/tikv/rocksdb/blob/b4ef4c1e0f80cf3c2b7196d03951efc6d8959c49/port/mmap.h#L28 by チャッピー
+      - これは実際にはrocksdb
+
+## 第5章
+
 - 
